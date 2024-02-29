@@ -1,0 +1,16 @@
+Package: limeR
+Type: Package
+Title: REST API for Lime Trading broker
+Version: 0.1.0
+Date: 2023-08-25
+Author: Vyacheslav Arbuzov[cph, cre, aut]
+Depends: data.table,jsonlite,httr
+Maintainer: Vyacheslav Arbuzov <arbuzov1989@gmail.com>
+Description: Collection of functions to retrieve financial data from Lime Trading broker. Includes functions to retrieve account information, portfolio information, and place/cancel orders.
+LazyLoad: yes
+License: GPL-3
+Encoding: UTF-8
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+RoxygenNote: 7.2.3

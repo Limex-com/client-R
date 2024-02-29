@@ -1,0 +1,129 @@
+---
+title: "Lime Toy Algo"
+output: html_document
+date: "2023-08-25"
+---
+
+# Exploring LimeR R Package for Seamless Trading Integration
+
+In this article, we'll walk through an example that demonstrates how to use the `limeR` R package to seamlessly integrate with the Lime Trading broker's trading and market data services. The `limeR` package simplifies the process of connecting to Lime Trading's API, managing trading accounts, executing trades, and analyzing market data using the R programming language.
+
+## Installation and Authentication
+
+First, you need to install the `limeR` package from GitHub using the `devtools` package:
+
+```r
+# Install the devtools package if not already installed
+if (!require(devtools)) install.packages("devtools")
+
+# Install the limeR package from GitHub
+devtools::install_github("arbuzovv/limeR")
+```
+
+After installing the package, you need to authenticate and obtain an access token using your Lime Trading API credentials. Replace "your_client_id", "your_client_secret", "your_username", and "your_password" with your actual credentials:
+
+```{r eval=FALSE}
+library(limeR)
+
+# Authenticate and retrieve access token
+token <- getToken(client_id = "your_client_id",
+                  client_secret = "your_client_secret",
+                  username = "your_username",
+                  password = "your_password")
+```
+
+## Retrieving Account Information
+
+With the access token obtained, you can now retrieve your account information:
+```r
+# Retrieve account information
+account_info <- getAccount(api.key = token)
+```
+## Exploring Historical Market Data
+
+Let's say we're interested in trading Apple Inc. (AAPL) stocks. We can retrieve historical market data for the past 21 days and calculate the mean closing price:
+
+```{r eval=FALSE}
+# Retrieve trade symbol for Apple
+trade_symbol = symbolLookUp('Apple', token)$symbol[1]
+
+# Retrieve historical market data
+historical_data <- getHistory(symbol = trade_symbol, api.key = token,
+                              start_date = Sys.Date() - 21, end_date = Sys.Date(),
+                              period = "day")
+
+# Calculate the mean closing price
+mean_history_price = mean(historical_data$close)
+```
+## Placing a Conditional Limit Order
+
+Now, let's delve into the logic of placing a conditional limit order. We'll explore how to determine the trading signal, calculate the position size, assess the current portfolio, and then place the order, all within the context of Lime Trading's API and the `limeR` package.
+
+### Checking Trading Session
+
+Before executing any order, it's essential to check if the trading session is open. This helps ensure that the order is placed during active trading hours:
+
+
+```{r eval=FALSE}
+# Check if the trading session is open
+if (getSchedule(token)$session != "closed")
+{
+```
+
+## Determining the Trading Signal
+We'll use historical market data and the 52-week high to determine the trading signal. If the current price is 5% below the 52-week high, we'll consider it a buying opportunity. Otherwise, we'll consider it a selling opportunity
+```{r eval=FALSE}
+  # Retrieve the last price for our limit order
+  quote_data <- getQuote(symbol = "AAPL", api.key = token)
+
+  # Determine the trading signal based on historical data and 52-week high
+  signal = ifelse(quote_data$week52_high * 0.95 > mean_history_price, 1, -1)
+
+```
+## Calculating Position Size
+Next, we'll calculate the position size based on a fraction of the account's margin buying power. This helps ensure prudent risk management:
+
+```{r eval=FALSE}
+  # Calculate the position size based on account's margin buying power
+  position_size_money = account_info$margin_buying_power * 0.02
+  position_size = round(position_size_money / quote_data$last)
+
+```
+
+
+## Retrieving and Assessing the Current Portfolio
+We'll retrieve information about the current portfolio holdings to understand the existing exposure and decide whether to buy or sell:
+
+```{r eval=FALSE}
+  # Retrieve current portfolio information
+  my_portfolio = getPositions(account_info$account_number, token)
+
+  # Calculate order size and side based on trading signal
+  order_size = signal * position_size - my_portfolio[symbol == trade_symbol]$quantity
+  side = ifelse(order_size > 0, 'buy', 'sell')
+
+```
+
+## Placing the Limit Order
+Finally, we'll use the calculated values to place a limit order. This ensures that the order is executed at a specific price or better:
+```{r eval=FALSE}
+  # Place the limit order
+  order_result <- placeOrder(account = account_info$account_number,
+                              api.key = token,
+                              symbol = trade_symbol,
+                              quantity = position_size,
+                              order_type = "limit",
+                              price = quote_data$last,
+                              side = side)
+```
+## Closing the Block
+Wrap up the conditional order placement with a closing brace to complete the block:
+```{r eval=FALSE}
+}
+```
+## Conclusion
+
+The limeR package provides a convenient way to integrate with Lime Trading's services using R. It allows traders to automate trading strategies, analyze market data, and manage their portfolios seamlessly. By leveraging R's capabilities, you can make informed trading decisions and execute orders with ease.
+
+Remember to replace the placeholders with your actual API credentials and test the code in a controlled environment before applying it to live trading scenarios.
+
